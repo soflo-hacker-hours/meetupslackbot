@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  SlackWebHook:
+    Type: String
+    Description: Enter the webhook URL
+
+Globals:
+  Function:
+    Runtime: python3.7
+    Handler: lambda_function.lambda_handler
+    Timeout: 8
+    MemorySize: 128
+    Environment:
+      Variables:
+        SLACKWEBHOOKURL: !Ref SlackWebHook
+
+Resources:
+
+  StackRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /SFHH/
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+
+  TheLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt StackRole.Arn
+      CodeUri: lambda_function.py
+      Events:
+        EndpointPost:
+          Type: Api
+          Properties:
+            Path: /api
+            Method: post
+
+Outputs:
+  DeployStage:
+    Description: "URL Endpoint"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
